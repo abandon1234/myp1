@@ -1,0 +1,35 @@
+@startuml
+skinparam handwritten true
+actor 张三 as zs
+actor 李四 as ls
+database "优惠券数据库" as DB
+
+== 并发操作开始 ==
+
+zs -> DB : 加锁
+zs -> DB : 读取库存 (ID: X1)
+DB --> zs : 返回库存 10
+
+zs -> DB : 将库存更新为 20 (10 + 10)
+DB --> zs : 操作完成
+zs -> DB : 释放锁
+
+== 张三操作完成后，李四开始操作 ==
+
+ls -> DB : 加锁
+ls -> DB : 读取库存 (ID: X1)
+DB --> ls : 返回库存 20
+
+ls -> DB : 将库存更新为 30 (20 + 10)
+DB --> ls : 操作完成
+ls -> DB : 释放锁
+
+== 最终结果 ==
+
+note right of DB
+    由于在读取和更新时都使用了排他锁，
+    张三更新库存后，李四读取并更新，
+    最终库存正确更新为 30。
+end note
+
+@enduml

@@ -1,0 +1,42 @@
+@startuml
+
+skinparam backgroundColor #F4F4F4
+skinparam handwritten true
+skinparam shadowing true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+}
+
+actor "XXL-Job" as XxlJob
+participant "execute()" as Execute
+participant "CouponTaskMapper" as CouponTask
+participant "distributeCoupon()" as Distribute
+participant "RocketMQ" as MQ
+
+XxlJob -> Execute: execute()
+loop while there are tasks
+    Execute -> CouponTask: fetchPendingTasks(initId, now)
+    CouponTask --> Execute: return taskList
+    alt if taskList is empty
+        Execute -> XxlJob: break
+    end
+    loop for each task in taskList
+        Execute -> Distribute: distributeCoupon(task)
+        Distribute -> CouponTask: update status to IN_PROGRESS
+        Distribute -> MQ: sendMessage(taskEvent)
+        MQ --> Distribute: message sent
+    end
+    alt if taskList.size() < MAX_LIMIT
+        Execute -> XxlJob: break
+    else
+        Execute -> Execute: update initId
+    end
+end
+
+@enduml

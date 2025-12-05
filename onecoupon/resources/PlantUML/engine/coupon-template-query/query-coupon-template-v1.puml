@@ -1,0 +1,31 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+actor User
+database Redis as "Redis 数据库"
+database MySQL as "MySQL 数据库"
+
+User -> "Redis": 请求优惠券数据
+alt 缓存中无数据
+    "Redis" -> User: 返回空
+    User -> "MySQL": 请求数据库
+    "MySQL" --> User: 返回优惠券数据
+    User -> "Redis": 缓存优惠券数据
+    "Redis" --> User: 缓存成功
+else 缓存中有数据
+    "Redis" --> User: 返回优惠券数据
+end
+@enduml

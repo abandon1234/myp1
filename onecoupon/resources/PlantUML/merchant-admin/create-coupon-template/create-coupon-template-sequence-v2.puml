@@ -1,0 +1,108 @@
+@startuml
+skinparam actorBorderColor Black
+skinparam actorBackgroundColor LightSteelBlue
+skinparam participantBorderColor Black
+skinparam participantBackgroundColor White
+skinparam sequenceArrowThickness 2
+skinparam sequenceArrowColor DarkSlateGray
+skinparam sequenceParticipantPadding 15
+skinparam sequenceBoxBorderColor Black
+skinparam sequenceBoxBackgroundColor #F0F8FF
+skinparam participantFontSize 14
+skinparam actorFontSize 14
+skinparam noteBackgroundColor #FFFFE0
+skinparam noteBorderColor Black
+skinparam boxBackgroundColor #F0FFFF
+skinparam boxBorderColor Black
+skinparam handwritten true
+skinparam backgroundColor #EEEBDC
+
+skinparam sequence {
+  ArrowColor DeepSkyBlue
+  ActorBorderColor DeepSkyBlue
+  LifeLineBorderColor blue
+  LifeLineBackgroundColor #A9DCDF
+
+  ParticipantBorderColor DeepSkyBlue
+  ParticipantBackgroundColor DodgerBlue
+  ParticipantFontName Impact
+  ParticipantFontSize 17
+  ParticipantFontColor #A9DCDF
+
+  ActorBackgroundColor aqua
+  ActorFontColor DeepSkyBlue
+  ActorFontSize 17
+  ActorFontName Aapex
+}
+
+actor 商家
+
+box "优惠券模板服务" #E6E6FA
+participant "CouponTemplateService" as 服务
+end box
+
+database "MySQL 数据库" as 数据库操作
+database "Redis 缓存" as 缓存操作
+
+participant "责任链上下文" as 责任链
+participant "操作日志" as 操作日志
+skinparam participant {
+    BackgroundColor #E6FFE6
+    BorderColor Black
+    FontSize 14
+    FontColor Black
+    BorderThickness 2
+}
+
+note right of 责任链
+end note
+
+note right of 操作日志
+end note
+
+商家 -> 服务 : 创建优惠券模板(requestParam)
+activate 服务
+
+group 请求参数验证
+    skinparam groupBorderColor #D0F0C0
+    skinparam groupBackgroundColor #E6F8E0
+    服务 -> 责任链 : 通过责任链模式验证请求参数
+    activate 责任链
+    责任链 --> 服务 : 验证失败
+    destroy 责任链
+    服务 -> 商家 : 返回失败
+end group
+
+group 新增数据库
+    skinparam groupBorderColor #F0E6FF
+    skinparam groupBackgroundColor #F8E6FF
+    activate 服务
+    服务 -> 服务 : 构建优惠券实体
+    服务 -> 数据库操作 : 新增数据库优惠券实体记录
+    activate 数据库操作
+    数据库操作 --> 服务 : 新增成功
+    deactivate 数据库操作
+end group
+
+group 缓存预热
+    skinparam groupBorderColor #E6F0F8
+    skinparam groupBackgroundColor #E6F8F8
+    服务 -> 服务 : 构建预热优惠券缓存 Hash Value
+    服务 -> 缓存操作 : 执行缓存预热 (put优惠券模板 for Hash)
+    activate 缓存操作
+    缓存操作 --> 服务 : 预热成功
+    deactivate 缓存操作
+end group
+
+group 操作日志记录
+    skinparam groupBorderColor #F0F8FF
+    skinparam groupBackgroundColor #F8F8FF
+    服务 --> 操作日志 : mzt-biz-log 记录操作日志
+    activate 操作日志
+    操作日志 --> 服务 : 记录成功
+    deactivate 操作日志
+end group
+
+deactivate 服务
+
+@enduml

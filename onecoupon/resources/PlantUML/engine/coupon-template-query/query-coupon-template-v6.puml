@@ -1,0 +1,69 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+actor User as "用户"
+database Cache as "Redis缓存"
+participant LockManager as "分布式锁管理器"
+participant Lock1 as "锁分片1"
+participant Lock2 as "锁分片2"
+participant Lock3 as "锁分片3"
+participant Lock10 as "锁分片10"
+database MySQL as "MySQL数据库"
+
+title 分布式锁分片方案
+
+== 用户请求阶段 ==
+User -> Cache: 查询缓存
+alt 缓存中无数据
+    Cache -> User: 返回空
+
+    ' 选择锁分片
+    User -> LockManager: 请求锁分片 (hash % 10)
+    alt 锁分片1
+        LockManager -> Lock1: 获取锁
+    else 锁分片2
+        LockManager -> Lock2: 获取锁
+    else 锁分片10
+        LockManager -> Lock10: 获取锁
+    end
+
+    Lock1 -> LockManager: 锁获取成功
+    Lock2 -> LockManager: 锁获取成功
+    Lock10 -> LockManager: 锁获取成功
+
+    LockManager -> Cache: 再次查询缓存
+    alt 缓存中无数据
+        Cache -> MySQL: 查询数据库
+        MySQL --> Cache: 返回数据库数据
+        Cache -> Cache: 更新缓存
+        Cache --> LockManager: 缓存成功
+    else 缓存存在
+        Cache --> LockManager: 返回缓存数据
+    end
+
+    LockManager -> Lock1: 释放锁
+    LockManager -> Lock2: 释放锁
+    LockManager -> Lock10: 释放锁
+
+    Lock1 --> User: 返回数据
+    Lock2 --> User: 返回数据
+    Lock10 --> User: 返回数据
+
+else 缓存中有数据
+    Cache --> User: 返回缓存数据
+end
+
+@enduml

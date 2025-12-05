@@ -1,0 +1,34 @@
+@startuml
+!define SHADOWABLE(w, h, x, y) shadowing(w, h, x, y, #a8a8a8)
+!define GRADIENTABLE(w, h, x, y, color1, color2) gradient(w, h, x, y, color1, color2)
+
+skinparam backgroundColor #f5f5f5
+skinparam shadowing true
+skinparam shadowOffset 5
+skinparam shadowAlpha 0.6
+skinparam fontName "Segoe UI, Helvetica, Arial, sans-serif"
+skinparam sequenceParticipantFontSize 16
+skinparam sequenceMessageFontSize 14
+skinparam noteBackgroundColor #FFF8DC
+skinparam noteBorderColor #8B4513
+skinparam handwritten true
+
+actor caller as "Caller" #D1E8FF
+participant proxy as "Proxy" #F2F2F2
+participant aspect as "Aspect" #FFEFD5
+participant targetMethod as "Target Method" #F2F2F2
+
+caller -> proxy : 调用方法
+proxy -> aspect : 环绕通知前
+aspect -> targetMethod : 调用目标方法
+targetMethod -> aspect : 返回结果
+aspect -> proxy : 环绕通知后
+proxy -> caller : 返回结果
+
+note right of aspect
+    1. 环绕通知开始（如：日志记录，权限验证，获取分布式锁）
+    2. 调用目标方法
+    3. 环绕通知结束（如：日志记录，事务管理，释放分布式锁）
+end note
+
+@enduml

@@ -1,0 +1,100 @@
+@startuml
+skinparam classAttributeColor #333333
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #DDDDDD
+skinparam classFontColor #333333
+skinparam classFontName "Segoe UI, Arial, sans-serif"
+skinparam arrowColor #007ACC
+skinparam arrowFontColor #007ACC
+skinparam packageStyle rectangle
+skinparam packageFillColor #F9F9F9
+skinparam packageFontColor #333333
+skinparam noteBackgroundColor #FFFFE0
+skinparam noteBorderColor #CCCCCC
+skinparam handwritten true
+
+' Layout and direction
+left to right direction
+top to bottom direction
+
+' Define original database with color
+package "原始数据库" {
+  class MallDB << (D, #CFE2F3) >> {
+    - 用户表 UserTable
+    - 订单表 OrderTable
+    - 支付表 PayTable
+  }
+}
+
+' Define vertical splitting with color
+package "垂直拆库" {
+  class UserDB << (D, #D9EAD3) >> {
+    - 用户表 UserTable
+  }
+
+  class OrderDB << (D, #D9EAD3) >> {
+    - 订单表 OrderTable
+  }
+
+  class PayDB << (D, #D9EAD3) >> {
+    - 支付表 PayTable
+  }
+}
+
+' Define sharding with color
+package "分片拆库" {
+  class UserDB_0 << (D, #EAD1DC) >> {
+    - 用户表 UserTable
+  }
+
+  class UserDB_1 << (D, #EAD1DC) >> {
+    - 用户表 UserTable
+  }
+
+  class UserDB_xx << (D, #EAD1DC) >> {
+    - 用户表 UserTable
+  }
+}
+
+' Define vertical table splitting with color
+package "垂直拆表" {
+  class OrderTable << (D, #CFE2F3) >> {
+    - 订单ID
+    - 用户ID
+    - 订单金额
+  }
+
+  class OrderExtTable << (D, #CFE2F3) >> {
+    - 订单ID
+    - 扩展信息
+  }
+}
+
+' Define horizontal table splitting with color
+package "水平拆表" {
+  class OrderTable_0 << (D, #EAD1DC) >> {
+    - 订单ID
+    - 用户ID
+    - 订单金额
+  }
+
+  class OrderTable_xxx << (D, #EAD1DC) >> {
+    - 订单ID
+    - 用户ID
+    - 订单金额
+  }
+}
+
+' Define interactions with arrow labels and colors
+MallDB -down-> UserDB : 垂直拆分
+MallDB -down-> OrderDB : 垂直拆分
+MallDB -down-> PayDB : 垂直拆分
+
+UserDB -down-> UserDB_0 : 分片拆库
+UserDB -down-> UserDB_1 : 分片拆库
+UserDB -down-> UserDB_xx : 分片拆库
+
+OrderTable -right-> OrderExtTable : 垂直拆表
+OrderTable -down-> OrderTable_0 : 水平拆表
+OrderTable -right-> OrderTable_xxx : 水平拆表
+@enduml

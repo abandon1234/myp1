@@ -1,0 +1,41 @@
+@startuml
+' 设置颜色和样式
+skinparam backgroundColor #F5F5F5
+skinparam actorBackgroundColor #FFFFFF
+skinparam actorBorderColor #007ACC
+skinparam databaseBackgroundColor #E0F7FA
+skinparam databaseBorderColor #00796B
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F9A825
+skinparam arrowColor #0277BD
+skinparam participantPadding 10
+skinparam participantFontColor #004D40
+skinparam arrowFontColor #004D40
+skinparam handwritten true
+
+actor 商家 as merchant #red
+
+database "优惠券数据库" as DB
+database "操作日志" as Log
+
+' 商家发起结束操作
+merchant -> DB : 结束优惠券 (ID: X1)
+DB -> DB : 处理结束操作
+DB -> Log : 记录结束操作
+
+' 重复调用结束操作
+merchant -> DB : 结束优惠券 (ID: X1)
+DB -> DB : 处理结束操作
+DB -> Log : 记录结束操作
+
+merchant -> DB : 结束优惠券 (ID: X1)
+DB -> DB : 处理结束操作
+DB -> Log : 记录结束操作
+
+note right of merchant
+    商家针对相同优惠券 ID: X1
+    重复调用结束接口
+    即使操作结果相同，但操作日志中会记录多条，增加成本
+end note
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+actor User as "用户"
+participant Service as "Coupon Service"
+database Redis as "Redis缓存"
+database MySQL as "MySQL数据库"
+
+title 缓存穿透防护时序图 - 缓存空结果
+
+User -> Service: 请求优惠券模板信息
+Service -> Redis: 查询缓存 (根据优惠券模板ID)
+
+alt 缓存中无数据
+    Redis -> Service: 返回空
+    Service -> MySQL: 查询数据库 (根据模板ID)
+    alt 数据库中无数据
+        MySQL -[#red]> Service: 返回空
+        Service -> Redis: 缓存空结果 (设置短期过期时间)
+        Redis --> Service: 缓存成功
+        Service -[#red]-> User: 返回空
+    else 数据库中有数据
+        MySQL --> Service: 返回数据库数据
+        Service -> Redis: 将数据存入缓存 (设置正常过期时间)
+        Redis --> Service: 缓存成功
+        Service --> User: 返回数据库数据
+    end
+else 缓存中有数据
+    Redis -> Service: 返回缓存数据
+    Service --> User: 返回缓存数据
+end
+@enduml

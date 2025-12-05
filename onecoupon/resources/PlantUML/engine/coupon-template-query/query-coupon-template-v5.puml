@@ -1,0 +1,47 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+actor User as "用户"
+participant DistributedLock as "Redisson分布式锁"
+database Redis as "Redis数据库"
+database MySQL as "MySQL数据库"
+
+title 双重判定分布式锁解决方案
+
+' 用户请求阶段
+User -> DistributedLock: 请求获取锁
+alt 锁可用
+    DistributedLock -> Redis: 获取锁
+    Redis --> DistributedLock: 锁获取成功
+    alt 缓存中有数据
+        DistributedLock -> Redis: 查询缓存
+        Redis --> DistributedLock: 返回缓存数据
+        DistributedLock -> User: 返回缓存数据
+    else 缓存中无数据
+        DistributedLock -> Redis: 查询缓存
+        Redis --> DistributedLock: 缓存中无数据
+        DistributedLock -> MySQL: 访问数据库
+        MySQL --> DistributedLock: 返回数据库结果
+        DistributedLock -> Redis: 缓存数据库结果
+        Redis --> DistributedLock: 缓存成功
+        DistributedLock -> Redis: 释放锁
+    end
+    DistributedLock -> User: 返回数据库结果
+else 锁不可用
+    DistributedLock -> User: 等待或返回错误信息
+end
+
+@enduml

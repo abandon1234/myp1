@@ -1,0 +1,51 @@
+@startuml
+skinparam classAttributeColor #333333
+skinparam classBackgroundColor #F4F4FF
+skinparam classBorderColor #333333
+skinparam classFontColor #000000
+skinparam classFontName "Segoe UI, Arial, sans-serif"
+
+skinparam interfaceAttributeColor #333333
+skinparam interfaceBackgroundColor #E0F0E0
+skinparam interfaceBorderColor #006400
+skinparam interfaceFontColor #006400
+skinparam interfaceFontName "Segoe UI, Arial, sans-serif"
+
+skinparam direction "right"
+
+interface ChainHandler {
+  + handleRequest(Request request)
+}
+
+class HandlerContainer {
+  - List<ChainHandler> handlers
+  + void addHandler(ChainHandler handler)
+  + void handleRequest(Request request)
+}
+
+class ConcreteHandlerA {
+  - String name
+  + handleRequest(Request request)
+}
+
+class ConcreteHandlerB {
+  - String name
+  + handleRequest(Request request)
+}
+
+class ConcreteHandlerC {
+  - String name
+  + handleRequest(Request request)
+}
+
+class Request {
+  - String data
+}
+
+HandlerContainer <.. ChainHandler
+HandlerContainer o-- ConcreteHandlerA
+HandlerContainer o-- ConcreteHandlerB
+HandlerContainer o-- ConcreteHandlerC
+ChainHandler ..> Request : processes
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+
+skinparam backgroundColor #F7F7F7
+skinparam shadowing true
+skinparam handwritten true
+skinparam actorBorderColor #4A4A4A
+skinparam actorBackgroundColor #E0E0E0
+skinparam actorFontColor #1A1A1A
+skinparam participantBorderColor #7F8C8D
+skinparam participantBackgroundColor #BDC3C7
+skinparam participantFontColor #1A1A1A
+skinparam sequence {
+    ArrowColor #2980B9
+    ArrowFontColor #1A1A1A
+    LifeLineBorderColor #7F8C8D
+    LifeLineBackgroundColor #FFFFFF
+    BoxBorderColor #7F8C8D
+    BoxBackgroundColor #BDC3C7
+    ParticipantBackgroundColor #BDC3C7
+    ParticipantBorderColor #7F8C8D
+}
+
+actor "用户" as User
+participant "优惠券后管平台" as Backend
+participant "RocketMQ 消息队列" as RocketMQ
+participant "distribution 分发服务" as Distribution
+participant "XXL-Job 定时任务" as XXLJob
+
+User -> Backend : 创建优惠券分发任务
+Backend -> Backend : 判断发送类型
+
+alt 立即发送
+    Backend -> RocketMQ : 发送消息
+    RocketMQ -> Distribution : 分发服务监听消息
+    Distribution -> Distribution : 执行全分发流程
+else 定时发送
+    Backend -> XXLJob : 配置定时任务
+    note right of XXLJob : 定时扫描任务
+    XXLJob -> Backend : 到达发送时间
+    Backend -> RocketMQ : 发送消息
+    RocketMQ -> Distribution : 分发服务监听消息
+    Distribution -> Distribution : 执行全分发流程
+end
+
+@enduml

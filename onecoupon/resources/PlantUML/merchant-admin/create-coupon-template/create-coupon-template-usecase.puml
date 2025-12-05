@@ -1,0 +1,54 @@
+@startuml
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundcorner 15
+skinparam packageStyle pattern
+skinparam packageFillColor #F4F4FF
+skinparam packageFontColor #333333
+skinparam actorFontSize 16
+skinparam actorFontColor #333333
+skinparam arrowColor #333333
+skinparam backgroundColor #FFFFFF
+skinparam handwritten true
+
+left to right direction
+
+actor 平台运营人员 as 平台运营
+actor 审核人员 as 审核
+actor 商家用户 as 商家
+
+rectangle 服务 {
+  [数据库服务] as 数据库
+}
+
+rectangle 平台服务 {
+  [创建平台优惠券] as 创建平台优惠券
+  [审核平台优惠券] as 审核平台优惠券
+  [记录平台优惠券日志] as 记录平台优惠券日志
+  [保存平台优惠券记录到数据库] as 平台保存数据库记录
+}
+
+rectangle 商家后管服务 {
+  [创建商家优惠券] as 创建商家优惠券
+  [记录商家优惠券日志] as 商家记录优惠券日志
+  [保存商家优惠券记录到数据库] as 商家保存数据库记录
+}
+
+平台运营 -down-> 创建平台优惠券 : 发起创建
+创建平台优惠券 -right-> 审核平台优惠券 : 提交审核
+审核平台优惠券 -down->> 审核 : 进行审核
+审核 -up->> 审核平台优惠券 : 审核完成
+审核平台优惠券 -down->> 平台保存数据库记录 : 保存优惠券记录
+审核平台优惠券 -down->> 记录平台优惠券日志 : 记录审核日志
+
+商家 -down-> 创建商家优惠券 : 发起创建
+创建商家优惠券 -down->> 商家保存数据库记录 : 直接保存优惠券记录
+创建商家优惠券 -down->> 商家记录优惠券日志 : 记录创建日志
+
+平台保存数据库记录 -down->> 数据库 : 保存平台优惠券数据
+记录平台优惠券日志 -down->> 数据库 : 保存平台优惠券日志
+商家保存数据库记录 -down->> 数据库 : 保存商家优惠券数据
+商家记录优惠券日志 -down->> 数据库 : 保存商家优惠券日志
+
+@enduml

@@ -1,0 +1,41 @@
+@startuml
+' 设置颜色和样式
+skinparam backgroundColor #F5F5F5
+skinparam actorBackgroundColor #FFFFFF
+skinparam actorBorderColor #007ACC
+skinparam databaseBackgroundColor #E0F7FA
+skinparam databaseBorderColor #00796B
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F9A825
+skinparam arrowColor #0277BD
+skinparam participantPadding 10
+skinparam participantFontColor #004D40
+skinparam arrowFontColor #004D40
+skinparam handwritten true
+
+actor 张三 as zs
+actor 李四 as ls #red
+
+database "优惠券数据库" as DB
+
+' 张三创建优惠券
+zs -> DB : 写入数据 (ID: Z1)
+note right of zs
+    张三创建了优惠券ID为 Z1
+end note
+
+' 李四查询优惠券
+ls -> DB : 查询数据 (ID: Z1)
+DB -> ls : 返回信息
+note right of ls
+    李四查询了优惠券ID为 Z1
+end note
+
+' 李四尝试未经授权的操作（使用特殊注释来突出显示）
+ls -> DB : 尝试停止 (ID: Z1)
+ls -> DB : 尝试增加 (ID: Z1)
+note right of ls
+    李四知道优惠券ID Z1，尝试进行未经授权的操作
+end note
+
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+
+skinparam handwritten true
+skinparam backgroundColor #F9F9F9
+skinparam shadowing true
+skinparam actorBorderColor #4A90E2
+skinparam actorBackgroundColor #EAF2F8
+skinparam actorFontColor #2C3E50
+skinparam participantBorderColor #5D6D7E
+skinparam participantBackgroundColor #D5DBDB
+skinparam participantFontColor #2C3E50
+skinparam sequence {
+    ArrowColor #3498DB
+    ArrowFontColor #2C3E50
+    LifeLineBorderColor #5D6D7E
+    LifeLineBackgroundColor #FFFFFF
+    BoxBorderColor #5D6D7E
+    BoxBackgroundColor #D5DBDB
+    ParticipantBackgroundColor #D5DBDB
+    ParticipantBorderColor #5D6D7E
+}
+
+actor "平台用户" as User
+participant "优惠券后台管理服务" as Backend
+participant "消息队列" as MQ
+participant "分发服务" as Distribution
+database "MySQL数据库" as DB
+database "Redis缓存" as Redis
+
+User -> Backend : 创建优惠券分发任务
+Backend -> MQ : 发送分发任务消息
+MQ --> Backend : 消息发送成功
+
+MQ -> Distribution : 处理分发任务
+Distribution -> DB : 读取分发任务记录
+DB --> Distribution : 返回任务记录
+
+group 分发用户优惠券
+    Distribution -> Distribution : 读取Excel中用户信息
+    Distribution -> DB : 保存用户领券记录
+    DB --> Distribution : 记录保存成功
+    Distribution -> Redis : 保存用户领券缓存
+    Redis --> Distribution : 缓存保存成功
+end
+
+Distribution -> Distribution : 继续处理任务\n直到所有记录全部执行完成
+
+Distribution -> DB : 更新分发记录状态为已完成
+DB --> Distribution : 状态更新成功
+
+@enduml

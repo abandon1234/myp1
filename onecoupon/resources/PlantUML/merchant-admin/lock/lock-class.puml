@@ -1,0 +1,49 @@
+@startuml
+skinparam shadowing false
+skinparam fontName "Helvetica Neue, Helvetica, Arial, sans-serif"
+skinparam actorFontSize 16
+skinparam noteFontSize 14
+skinparam rectangleBorderColor #A9A9A9
+skinparam rectangleBackgroundColor #E0E0E0
+skinparam noteBorderColor #9E9E9E
+skinparam noteBackgroundColor #F0F0F0
+skinparam noteFontColor #333333
+
+skinparam backgroundColor #F5F5F5
+skinparam handwritten true
+
+skinparam ArrowColor #333333
+skinparam ArrowFontColor #333333
+
+top to bottom direction
+
+actor "用户" as User
+
+rectangle "前端控制台" #E8EAF6 {
+  (点击“创建优惠券”按钮) as ClickButton
+  (发送创建请求) as SendRequest
+}
+
+rectangle "商家后管系统" #D1C4E9 {
+  (创建优惠券) as CreateCouponInDB
+  (返回创建结果) as ReturnResult
+}
+
+User -down-> ClickButton : 发起请求
+ClickButton -right-> SendRequest : 发送请求
+SendRequest -down-> CreateCouponInDB : 创建优惠券请求
+CreateCouponInDB -right-> ReturnResult : 返回结果
+ReturnResult -down-> User : 显示结果
+
+note right of ClickButton
+    按钮未禁用可能导致用户体验问题
+end note
+
+note right of CreateCouponInDB
+    网络连接延迟可能导致按钮重复点击
+end note
+
+note right of CreateCouponInDB
+    系统处理延迟可能导致重复提交
+end note
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+
+skinparam backgroundColor #F7F7F7
+skinparam shadowing true
+skinparam handwritten true
+skinparam actorBorderColor #4A4A4A
+skinparam actorBackgroundColor #E0E0E0
+skinparam actorFontColor #1A1A1A
+skinparam participantBorderColor #7F8C8D
+skinparam participantBackgroundColor #BDC3C7
+skinparam participantFontColor #1A1A1A
+skinparam sequence {
+    ArrowColor #2980B9
+    ArrowFontColor #1A1A1A
+    LifeLineBorderColor #7F8C8D
+    LifeLineBackgroundColor #FFFFFF
+    BoxBorderColor #7F8C8D
+    BoxBackgroundColor #BDC3C7
+    ParticipantBackgroundColor #BDC3C7
+    ParticipantBorderColor #7F8C8D
+}
+
+actor "用户请求" as User
+participant "后管系统" as Backend
+participant "线程池" as ThreadPool
+database "MySQL数据库" as MySQL
+database "Redis延迟队列" as RedisQueue
+participant "EasyExcel解析" as EasyExcel
+
+User -> Backend : 发起百万数据量Excel解析请求
+Backend -> ThreadPool : 将任务提交到线程池
+Backend -> RedisQueue : 发送20秒延时任务
+ThreadPool -> EasyExcel : 开始解析Excel数据
+EasyExcel -> EasyExcel : 解析Excel行数据
+EasyExcel --> ThreadPool : 解析完成，返回数据
+ThreadPool -> MySQL : 更新Excel行数数据到数据库
+
+RedisQueue -> Backend : 延时20秒后触发
+Backend -> MySQL : 检查数据库是否有Excel行数据
+alt 数据已存在
+    Backend -> Backend : 数据已存在\n不处理逻辑
+else 数据不存在
+    Backend -> EasyExcel : 触发解析逻辑
+    EasyExcel -> EasyExcel : 解析Excel行数据
+    EasyExcel -> MySQL : 更新解析结果到数据库
+end
+
+@enduml

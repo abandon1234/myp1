@@ -1,0 +1,84 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+queue RocketMQ as "RocketMQ消息队列"
+participant CouponTaskExecuteConsumer as "优惠券任务执行消费者"
+participant ReadExcelDistributionListener as "读取 Excel 分发监听器"
+participant CouponExecuteDistributionConsumer as "优惠券执行分发消费者"
+database Redis as "Redis缓存"
+database MySQL as "MySQL数据库"
+
+title 优惠券分发任务执行时序图
+
+== 优惠券任务执行阶段 ==
+RocketMQ -> CouponTaskExecuteConsumer: 接收优惠券任务消息
+CouponTaskExecuteConsumer -> CouponTaskExecuteConsumer: 检查优惠券模板状态
+alt 状态不是执行中或未生效
+    CouponTaskExecuteConsumer -> RocketMQ: 返回失败 (状态不正确)
+else 状态为执行中且生效中
+    CouponTaskExecuteConsumer -> ReadExcelDistributionListener: 执行 Excel 读取分发逻辑
+end
+
+== 读取 Excel 分发逻辑 ==
+ReadExcelDistributionListener -> ReadExcelDistributionListener: 获取当前进度
+alt 进度已执行过
+    ReadExcelDistributionListener -> CouponTaskExecuteConsumer: 跳过 (防止宕机)
+else 进度未执行过
+    ReadExcelDistributionListener -> Redis: 执行 LUA 脚本 (扣减库存, 增加领券记录)
+    alt 扣减失败
+        Redis -> ReadExcelDistributionListener: 返回扣减失败
+        ReadExcelDistributionListener -> Redis: 记录失败进度
+        ReadExcelDistributionListener -> MySQL: 记录用户分发优惠券失败记录
+    else 扣减成功
+        Redis -> ReadExcelDistributionListener: 返回扣减成功
+        alt 领券记录长度达到 5000
+            ReadExcelDistributionListener -> RocketMQ: 发送消息队列 (到优惠券执行分发消费者)
+        else 长度未达到 5000
+            ReadExcelDistributionListener -> Redis: 同步当前进度
+        end
+    end
+end
+ReadExcelDistributionListener -> RocketMQ: 发送消息队列 (Excel 读取完成)
+
+== 优惠券执行分发阶段 ==
+RocketMQ -> CouponExecuteDistributionConsumer: 接收消息
+alt 消息为批处理达到5000
+    CouponExecuteDistributionConsumer -> MySQL: 扣减优惠券模板库存
+    alt 扣减失败
+        CouponExecuteDistributionConsumer -> CouponExecuteDistributionConsumer: 递归扣减
+    else 扣减成功
+        MySQL -> CouponExecuteDistributionConsumer: 返回成功
+        CouponExecuteDistributionConsumer -> Redis: 获取待保存入库用户优惠券列表
+        Redis -> CouponExecuteDistributionConsumer: 返回待保存列表
+        CouponExecuteDistributionConsumer -> MySQL: 批量保存用户优惠券
+        alt 唯一索引冲突
+            CouponExecuteDistributionConsumer -> MySQL: 按单条保存用户优惠券
+            CouponExecuteDistributionConsumer -> MySQL: 设置任务完成时间&分发状态为已完成
+        else 保存成功
+            MySQL -> CouponExecuteDistributionConsumer: 保存成功
+            CouponExecuteDistributionConsumer -> Redis: 更新用户领券记录
+        end
+    end
+else 消息为Excel读取完成
+    CouponExecuteDistributionConsumer -> Redis: 检查缓存池是否有剩余数据
+    alt 缓存池有剩余数据
+        CouponExecuteDistributionConsumer -> MySQL: 记录用户分发优惠券失败记录
+    else 无剩余数据
+        CouponExecuteDistributionConsumer -> CouponTaskExecuteConsumer: 设置任务完成时间&分发状态为已完成
+    end
+end
+
+@enduml

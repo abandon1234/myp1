@@ -1,0 +1,86 @@
+@startuml
+skinparam classAttributeColor #333333
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #DDDDDD
+skinparam classFontColor #333333
+skinparam classFontName "Segoe UI, Arial, sans-serif"
+skinparam arrowColor #333333
+skinparam arrowFontColor #333333
+skinparam packageStyle rectangle
+skinparam packageFillColor #E4E4E4
+skinparam packageFontColor #333333
+skinparam noteBackgroundColor #FFFFE0
+skinparam noteBorderColor #CCCCCC
+skinparam classBorderColor #008CBA
+skinparam classBackgroundColor #EAF3F3
+skinparam classFontColor #004D40
+skinparam arrowColor #004D40
+skinparam arrowFontColor #004D40
+skinparam handwritten true
+
+' Layout and direction
+left to right direction
+top to bottom direction
+
+' Define business entities with colors
+class 商家 {
+  - 操作类型: 创建优惠券模板
+  - 操作类型: 更新优惠券模板
+}
+
+class 用户 {
+  - 操作类型: 查询优惠券模板
+  - 操作类型: 领取优惠券
+}
+
+class ShardingSphere {
+  - 分片规则配置
+  - 路由请求到对应分片数据库
+}
+
+' Define MySQL databases with tables and colors
+package "MySQL 数据库" {
+  class MySQL_库1 << (D, #FFD700) >> {
+    - 优惠券模板表_1
+    - 优惠券模板表_2
+  }
+
+  class MySQL_库2 << (D, #FFD700) >> {
+    - 优惠券模板表_3
+    - 优惠券模板表_4
+  }
+
+  class MySQL_库3 << (D, #FFD700) >> {
+    - 优惠券模板表_5
+    - 优惠券模板表_6
+  }
+
+  class MySQL_库4 << (D, #FFD700) >> {
+    - 优惠券模板表_7
+    - 优惠券模板表_8
+  }
+
+  class MySQL_库5 << (D, #FFD700) >> {
+    - 优惠券模板表_9
+    - 优惠券模板表_10
+  }
+
+  class MySQL_库6 << (D, #FFD700) >> {
+    - 优惠券模板表_11
+    - 优惠券模板表_12
+  }
+}
+
+' Define interactions with arrow labels and colors
+商家 -right-> ShardingSphere : 发送创建或更新请求
+ShardingSphere -down-> MySQL_库1 : 写入/检索优惠券模板
+ShardingSphere -down-> MySQL_库2 : 写入/检索优惠券模板
+ShardingSphere -down-> MySQL_库3 : 写入/检索优惠券模板
+ShardingSphere -down-> MySQL_库4 : 写入/检索优惠券模板
+ShardingSphere -down-> MySQL_库5 : 写入/检索优惠券模板
+ShardingSphere -down-> MySQL_库6 : 写入/检索优惠券模板
+
+用户 -left-> ShardingSphere : 发送查询优惠券模板请求
+ShardingSphere -left-> 用户 : 发送查询优惠券模板请求
+
+@enduml

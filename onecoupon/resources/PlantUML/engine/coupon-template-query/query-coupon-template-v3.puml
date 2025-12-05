@@ -1,0 +1,45 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+}
+
+actor User as "用户"
+actor Admin as "管理员"
+database Redis as "Redis 数据库"
+database MySQL as "MySQL 数据库"
+
+title 缓存预热和永不过期机制
+
+== 缓存预热阶段 ==
+"Admin" -> "Redis": 设置热点数据缓存
+"Redis" -> "MySQL": 从数据库加载热点数据
+"MySQL" --> "Redis": 返回热点数据
+"Redis" -> "Redis": 设置缓存永不过期
+"Redis" -> "Admin": 确认热点数据已缓存
+
+== 活动进行中 ==
+User -> "Redis": 请求热点数据
+alt 缓存中有热点数据
+    "Redis" --> User: 返回缓存的热点数据
+else 缓存中过期或无数据
+    "Redis" -> "MySQL": 请求数据库获取数据
+    "MySQL" --> "Redis": 返回热点数据
+    "Redis" --> User: 返回热点数据
+    "Redis" -> "Redis": 更新缓存为永不过期
+end
+
+== 活动结束后 ==
+"Admin" -> "Redis": 设定缓存过期时间
+"Redis" -> "Redis": 更新过期时间
+@enduml

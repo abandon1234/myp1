@@ -1,0 +1,58 @@
+@startuml
+skinparam classAttributeColor #333333
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #DDDDDD
+skinparam classFontColor #333333
+skinparam classFontName "Segoe UI, Arial, sans-serif"
+skinparam arrowColor #007ACC
+skinparam arrowFontColor #007ACC
+skinparam packageStyle rectangle
+skinparam packageFillColor #F5F5F5
+skinparam packageFontColor #333333
+skinparam noteBackgroundColor #FFFFE0
+skinparam noteBorderColor #CCCCCC
+skinparam handwritten false
+skinparam handwritten true
+
+left to right direction
+
+' Define entities with colors
+class 店铺员工 << (A, #E1F5FE) >> {
+  +操作优惠券
+  +查看操作日志
+}
+
+class 商家 << (A, #E1F5FE) >> {
+  +操作优惠券
+  +查看操作日志
+}
+
+' Define the coupon management backend system with colors
+package "优惠券后管系统" {
+  class 优惠券操作 << (B, #C8E6C9) >> {
+    +创建优惠券
+    +更新优惠券
+    +删除优惠券
+  }
+
+  class 系统操作日志 << (B, #C8E6C9) >> {
+    +记录操作时间
+    +记录操作用户
+    +记录操作内容
+    +记录操作结果
+  }
+}
+
+class 平台管理员 << (C, #FFECB3) >> {
+  +查看操作日志
+}
+
+' Define interactions
+商家 -- 优惠券操作 : 发起操作
+店铺员工 -- 优惠券操作 : 发起操作
+商家 -- 系统操作日志 : 查看操作日志
+店铺员工 -- 系统操作日志 : 查看操作日志
+平台管理员 -- 系统操作日志 : 查看操作日志
+优惠券操作 -- 系统操作日志 : 记录操作日志
+
+@enduml

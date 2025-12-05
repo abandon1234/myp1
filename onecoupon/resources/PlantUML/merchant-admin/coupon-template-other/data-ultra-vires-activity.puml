@@ -1,0 +1,16 @@
+@startuml
+skinparam handwritten true
+
+start
+:接收查询请求;
+:查询数据库;
+:验证当前用户权限;
+if (权限验证通过?) then (yes)
+    :执行优惠券操作;
+    :返回操作结果;
+else (no)
+    :返回权限不足错误;
+endif
+stop
+
+@enduml

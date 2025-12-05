@@ -1,0 +1,40 @@
+@startuml
+' 设置颜色和样式
+skinparam backgroundColor #F5F5F5
+skinparam actorBackgroundColor #FFFFFF
+skinparam actorBorderColor #007ACC
+skinparam databaseBackgroundColor #E0F7FA
+skinparam databaseBorderColor #00796B
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F9A825
+skinparam arrowColor #0277BD
+skinparam participantPadding 10
+skinparam participantFontColor #004D40
+skinparam arrowFontColor #004D40
+skinparam handwritten true
+
+actor 张三 as zs #green
+actor 李四 as ls #red
+database "优惠券数据库" as DB
+
+' 张三和李四同时读取库存
+zs -> DB : 读取库存 (ID: X1)
+ls -> DB : 读取库存 (ID: X1)
+DB --> zs : 返回库存 10
+DB --> ls : 返回库存 10
+
+' 张三添加库存并写回
+zs -> zs : 添加库存 10
+zs -> DB : 将库存 20 写回 (ID: X1)
+
+' 李四添加库存并写回
+ls -> ls : 添加库存 10
+ls -> DB : 将库存 20 写回 (ID: X1)
+
+note right of DB
+    张三和李四在同一时刻操作
+    导致最终库存只增加了 10 个，
+    而不是预期的 20 个。
+end note
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #3498DB
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 11
+    RoundCorner 8
+    Padding 6
+    LineWidth 1
+}
+skinparam note {
+    BackgroundColor #FFFFFF
+    BorderColor #3498DB
+    FontColor #2C3E50
+    Padding 4
+    FontSize 10
+}
+
+' Define classes
+abstract class AbstractCommonSendProduceTemplate<T> {
+    +sendMessage(event: T): SendResult
+    #buildBaseSendExtendParam(event: T): BaseSendExtendDTO
+    #buildMessage(event: T, param: BaseSendExtendDTO): Message<?>
+}
+
+class CouponTaskActualExecuteProducer {
+    +sendMessage(event: Event): SendResult
+    #buildBaseSendExtendParam(event: Event): BaseSendExtendDTO
+    #buildMessage(event: Event, param: BaseSendExtendDTO): Message<?>
+}
+
+class CouponTemplateDelayExecuteStatusProducer {
+    +sendMessage(event: Event): SendResult
+    #buildBaseSendExtendParam(event: Event): BaseSendExtendDTO
+    #buildMessage(event: Event, param: BaseSendExtendDTO): Message<?>
+}
+
+' Define relationships
+AbstractCommonSendProduceTemplate <|-- CouponTaskActualExecuteProducer
+AbstractCommonSendProduceTemplate <|-- CouponTemplateDelayExecuteStatusProducer
+
+' Define notes
+note left of AbstractCommonSendProduceTemplate : 抽象类定义模板方法 `sendMessage`\n并调用抽象方法来构建消息参数和消息体
+
+note right of CouponTaskActualExecuteProducer : 实现消息发送逻辑\n处理优惠券推送任务
+
+note right of CouponTemplateDelayExecuteStatusProducer : 实现消息发送逻辑\n处理优惠券模板关闭定时任务
+
+@enduml

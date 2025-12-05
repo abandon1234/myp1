@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor #F5F5F5
+skinparam actorBackgroundColor #FFFFFF
+skinparam actorBorderColor #007ACC
+skinparam databaseBackgroundColor #E0F7FA
+skinparam databaseBorderColor #00796B
+skinparam noteBackgroundColor #FFF9C4
+skinparam noteBorderColor #F9A825
+skinparam arrowColor #0277BD
+skinparam participantPadding 10
+skinparam participantFontColor #004D40
+skinparam arrowFontColor #004D40
+!option handwritten true
+
+actor 运营人员 as operator #42A5F5
+
+participant "后管系统\n(消息队列生产者)" as admin
+participant "RocketMQ" as mq
+participant "分发系统\n(消息队列消费者)" as consumer
+database "牛券数据库\nMySQL" as db
+
+operator -> admin : 创建优惠券推送任务
+alt 实时发送
+    admin -> mq : 发送分发任务消息
+end
+
+mq -> consumer : 接收分发任务消息
+consumer -> consumer : 前置校验（任务 & 模板）
+
+loop Excel每行处理
+    consumer -> consumer : 判断库存是否充足（缓存）
+    alt 库存充足
+        consumer -> db : 扣减缓存 & 数据库存量
+        consumer -> db : 添加用户优惠券记录\n更新缓存
+    else 库存不足
+        consumer -> consumer : 跳过该记录
+    else 用户已领取优惠券
+        consumer -> consumer : 跳过该记录
+    end
+end
+
+note right of consumer
+    判断Excel是否最后一行，若是则更新分发任务记录
+end note
+
+consumer -> db : 更新任务状态和完成时间
+
+consumer -> mq : 返回消息队列执行完成ACK
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundColor #F4F4F4
+skinparam shadowing true
+skinparam handwritten true
+skinparam sequence {
+    ActorBackgroundColor #C0C0C0
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+    ParticipantBorderColor #3498DB
+    ParticipantBackgroundColor #E6F7FF
+    ArrowColor #2980B9
+    ArrowFontColor #2C3E50
+    FontColor #2C3E50
+    FontSize 12
+    LifeLineBackgroundColor #F0F0F0
+    LifeLineBorderColor #3498DB
+}
+
+actor "用户请求" as User
+database Redis as "Redis数据库"
+database MySQL as "MySQL数据库"
+
+User -> Redis: 大量用户同一时间请求热点数据
+alt Redis 中无数据 (数据过期或不存在)
+    Redis -> MySQL: 请求数据 (大量并发请求)
+    MySQL -> Redis: 返回数据并缓存
+    Redis -> User: 返回数据
+else Redis 中有数据
+    Redis -> User: 返回缓存中的数据
+end
+
+alt MySQL 负载过高
+    MySQL -> MySQL: 发生性能问题
+    MySQL -> User: 可能响应缓慢或失败
+    MySQL -> MySQL: 可能引起宕机
+end
+
+@enduml

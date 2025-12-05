@@ -1,0 +1,43 @@
+@startuml
+skinparam handwritten true
+skinparam rectangle {
+    BorderColor #E6E6FA
+    FontColor Black
+    FontSize 13
+    RoundCorner 10
+    Shadowing true
+}
+skinparam database {
+    BackgroundColor #2196F3
+    BorderColor #CFD8DC
+    FontColor Black
+    FontSize 14
+    BorderThickness 2
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #64B5F6
+    FontColor Black
+    FontSize 14
+}
+
+actor User as u #E3F2FD
+
+rectangle "优惠券管理系统" as cms {
+
+  database "查询数据库" as DB
+  database "更新数据库" as DB2
+
+  u --> (分页查询优惠券模板) #B0BEC5
+  u --> (查询优惠券模板详情) #B0BEC5
+  u --> (增加优惠券模板发行量) #B0BEC5
+  u --> (结束优惠券模板) #B0BEC5
+
+  (分页查询优惠券模板) --> DB #B0BEC5
+  (查询优惠券模板详情) --> DB #B0BEC5
+  (增加优惠券模板发行量) --> DB2 #B0BEC5
+  (结束优惠券模板) --> DB2 #B0BEC5
+
+}
+
+@enduml

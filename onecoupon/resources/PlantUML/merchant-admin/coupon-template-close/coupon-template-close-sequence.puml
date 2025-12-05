@@ -1,0 +1,29 @@
+@startuml
+
+skinparam handwritten true
+
+actor 商家用户
+participant 优惠券后台管理系统
+
+database "MySQL数据库" as DB
+participant RocketMQ5.x
+
+
+商家用户 -> 优惠券后台管理系统 : 创建优惠券模板
+优惠券后台管理系统 -> DB : 保存优惠券模板 (状态: 生效中)
+DB --> 优惠券后台管理系统 : 保存成功
+
+优惠券后台管理系统 -> RocketMQ5.x : 发送延时队列消息
+RocketMQ5.x --> 优惠券后台管理系统 : 消息发送成功
+
+RocketMQ5.x -> RocketMQ5.x : 延迟消息等待
+RocketMQ5.x -> 优惠券后台管理系统 : 到期执行延迟消息
+优惠券后台管理系统 -> DB : 获取优惠券记录
+DB --> 优惠券后台管理系统 : 返回优惠券记录
+
+优惠券后台管理系统 -> DB : 修改优惠券状态为已结束
+DB --> 优惠券后台管理系统 : 修改成功
+
+优惠券后台管理系统 -> RocketMQ5.x : 返回消息队列消费成功
+RocketMQ5.x --> 优惠券后台管理系统 : 消费成功
+@enduml

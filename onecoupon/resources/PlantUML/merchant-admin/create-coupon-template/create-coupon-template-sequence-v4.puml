@@ -1,0 +1,85 @@
+@startuml
+skinparam actorBorderColor Black
+skinparam actorBackgroundColor LightSteelBlue
+skinparam participantBorderColor Black
+skinparam participantBackgroundColor White
+skinparam sequenceArrowThickness 2
+skinparam sequenceArrowColor DarkSlateGray
+skinparam sequenceParticipantPadding 15
+skinparam sequenceBoxBorderColor Black
+skinparam sequenceBoxBackgroundColor #F0F8FF
+skinparam participantFontSize 14
+skinparam actorFontSize 14
+skinparam noteBackgroundColor #FFFFE0
+skinparam noteBorderColor Black
+skinparam boxBackgroundColor #F0FFFF
+skinparam boxBorderColor Black
+
+actor 用户
+
+box "优惠券模板服务" #E6E6FA
+participant "CouponTemplateService" as 服务
+end box
+
+database "MySQL 数据库" as 数据库操作
+database "Redis 缓存" as 缓存操作
+
+participant "商家管理责任链" as 责任链
+skinparam participant {
+    BackgroundColor #E6FFE6
+    BorderColor Black
+    FontSize 14
+    FontColor Black
+    BorderThickness 2
+}
+note right of 责任链
+end note
+
+participant "日志记录上下文" as 日志上下文
+skinparam participant {
+    BackgroundColor #FFFFE0
+    BorderColor Black
+    FontSize 14
+    FontColor Black
+    BorderThickness 2
+}
+note right of 日志上下文
+end note
+
+用户 -> 服务 : 创建优惠券模板(requestParam)
+
+group 防重复提交
+    skinparam groupBorderColor #D0E6FF
+    skinparam groupBackgroundColor #E6F0FF
+    服务 -> 缓存操作 : 校验请求是否重复
+    缓存操作 --> 服务 : 请求重复
+    服务 -> 用户 : 返回失败
+end group
+
+group 请求参数验证
+    skinparam groupBorderColor #D0F0C0
+    skinparam groupBackgroundColor #E6F8E0
+    服务 -> 责任链 : 验证请求参数
+    责任链 --> 服务 : 验证失败
+    服务 -> 用户 : 返回失败
+end group
+
+group 新增数据库
+    skinparam groupBorderColor #F0E6FF
+    skinparam groupBackgroundColor #F8E6FF
+    服务 -> 服务 : 生成 couponTemplateDO
+    服务 -> 数据库操作 : 插入 couponTemplateDO
+end group
+
+group 缓存预热
+    skinparam groupBorderColor #E6F0F8
+    skinparam groupBackgroundColor #E6F8F8
+    服务 -> 服务 : 构建缓存 Hash Value
+    服务 -> 缓存操作 : 缓存预热 (put优惠券模板 for Hash)
+end group
+
+skinparam groupBorderColor #FFF0D0
+skinparam groupBackgroundColor #FFF8E6
+服务 -> 日志上下文 : 保存数据库操作日志
+
+@enduml
